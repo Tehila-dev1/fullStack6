@@ -35,14 +35,14 @@ function App() {
               </ProtectedRoute>
             }
           >
-            <Route path="/home" element={<HomePage />} /> 
+           <Route path="/users/:userId/info" element={<HomePage />} />
             <Route path="/users/:userId/todos" element={<TodosPage />} />
             <Route path="/users/:userId/posts" element={<PostsPage />} />
             <Route path="/users/:userId/albums" element={<AlbumsPage />} />
           </Route>
           
           {/* ברירת מחדל, כל נתיב שלא מוגדר יפנה לדף ההתחברות */ }
-          <Route path="/" element={<Navigate to="/login" />} />
+        <Route path="*" element={<Navigate to="/login" />} />
         </Routes>
       </Router>
     </AuthProvider>

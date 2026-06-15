@@ -9,7 +9,7 @@ function Navbar() {
   return (
     <nav className="top-navbar">
       <div className="nav-links">
-        <NavLink to="/home" className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}>Info</NavLink>
+       <NavLink to={`/users/${user?.id}/info`} className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}>Info</NavLink>
         <NavLink to={`/users/${user?.id}/todos`} className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}>Todos</NavLink>
         <NavLink to={`/users/${user?.id}/posts`} className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}>Posts</NavLink>
         <NavLink to={`/users/${user?.id}/albums`} className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}>Albums</NavLink>

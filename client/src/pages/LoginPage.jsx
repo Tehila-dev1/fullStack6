@@ -20,7 +20,7 @@ function LoginPage() {
 
       if (user) {
         login(user);
-        navigate('/home');
+        navigate(`/users/${user.id}/info`);
       } else {
         alert('Invalid username or password');
       }
