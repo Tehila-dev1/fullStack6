@@ -3,19 +3,24 @@ import pool from '../db.js';
 
 const router = express.Router();
 
-// POST /auth/login - התחברות
 router.post('/login', async (req, res) => {
   try {
     const { username, password } = req.body;
-    // חיפוש המשתמש לפי username
+    
     const [users] = await pool.query('SELECT * FROM users WHERE username = ?', [username]);
-    if (users.length === 0) return res.status(401).json({ error: 'Invalid username or password' });
+    if (users.length === 0) return res.status(401).json({ error: 'User not found' });
 
     const user = users[0];
-    // בדיקת הסיסמה
     const [passwords] = await pool.query('SELECT * FROM passwords WHERE user_id = ?', [user.id]);
+    
+    // כאן הדיבוג: מה באמת קורה?
+    console.log("--- DEBUG LOGIN ---");
+    console.log("Input Password:", password);
+    console.log("DB Password:", passwords[0]?.password);
+    console.log("Match:", passwords[0]?.password === password);
+    
     if (passwords.length === 0 || passwords[0].password !== password) {
-      return res.status(401).json({ error: 'Invalid username or password' });
+      return res.status(401).json({ error: 'Invalid password' });
     }
 
     res.json(user);

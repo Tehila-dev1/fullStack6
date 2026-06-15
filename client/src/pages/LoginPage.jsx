@@ -4,16 +4,21 @@ import { useAuth } from '../context/AuthContext';
 import { loginUser } from '../services/authService';
 import './Auth.css';
 
-//דף התחברות
+// דף התחברות
 function LoginPage() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  //מנסה להתחבר ואם מצליח מנטב לדף הבית
+  // מנסה להתחבר ואם מצליח מנתב לדף הבית
   const handleLogin = async (e) => {
     e.preventDefault();
+    setError('');
+    setLoading(true);
 
     try {
       const user = await loginUser(username, password);
@@ -22,10 +27,12 @@ function LoginPage() {
         login(user);
         navigate(`/users/${user.id}/info`);
       } else {
-        alert('Invalid username or password');
+        setError('Invalid username or password');
       }
-    } catch (error) {
-      alert('Error connecting to the server');
+    } catch (err) {
+      setError('Error connecting to the server');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -34,12 +41,16 @@ function LoginPage() {
       <div className="auth-card">
         <h1>Login</h1>
         <form onSubmit={handleLogin} className="auth-form">
+          {/* תצוגת שגיאה במידה ויש */}
+          {error && <p className="error-message">{error}</p>}
+          
           <input 
             type="text" 
             placeholder="Username" 
             value={username}
             onChange={(e) => setUsername(e.target.value)} 
             required 
+            disabled={loading}
           />
           <input 
             type="password" 
@@ -47,8 +58,11 @@ function LoginPage() {
             value={password}
             onChange={(e) => setPassword(e.target.value)} 
             required 
+            disabled={loading}
           />
-          <button type="submit">Login</button>
+          <button type="submit" disabled={loading}>
+            {loading ? 'Logging in...' : 'Login'}
+          </button>
         </form>
         <p className="auth-link">
           Don't have an account yet? <Link to="/register">Register now</Link>

@@ -57,7 +57,8 @@ export const usePostsManager = (user) => {
   //מחיקת פוסט
   const handleDeletePost = async (postId) => {
     if (window.confirm("Delete Post?")) {
-      await postService.deletePost(postId);
+      // הוספנו את user.id לקריאה לשרת כדי לאמת בעלות!
+      await postService.deletePost(postId, user.id); 
       setPosts(posts.filter(p => p.id !== postId));
       setSelectedPost(null);
     }

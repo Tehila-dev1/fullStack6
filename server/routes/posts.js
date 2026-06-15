@@ -44,11 +44,21 @@ router.post('/', async (req, res) => {
   }
 });
 
-// PUT /posts/:id - עדכון post
+// PUT /posts/:id - עדכון post 
 router.put('/:id', async (req, res) => {
   try {
-    const { title, body } = req.body;
-    await pool.query('UPDATE posts SET title=?, body=? WHERE id=?', [title, body, req.params.id]);
+    const { title, body, userId } = req.body; 
+    
+    // הוספנו פה את הבדיקה AND user_id=?
+    const [result] = await pool.query(
+      'UPDATE posts SET title=?, body=? WHERE id=? AND user_id=?', 
+      [title, body, req.params.id, userId]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(403).json({ error: 'Not authorized to edit this post' });
+    }
+
     const [updated] = await pool.query('SELECT * FROM posts WHERE id = ?', [req.params.id]);
     res.json(updated[0]);
   } catch (err) {
@@ -56,10 +66,21 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-// DELETE /posts/:id - מחיקת post
+// DELETE /posts/:id - מחיקת post 
 router.delete('/:id', async (req, res) => {
   try {
-    await pool.query('DELETE FROM posts WHERE id = ?', [req.params.id]);
+    const { userId } = req.query;
+
+    // הוספנו פה את הבדיקה AND user_id=?
+    const [result] = await pool.query(
+      'DELETE FROM posts WHERE id = ? AND user_id = ?', 
+      [req.params.id, userId]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(403).json({ error: 'Not authorized to delete this post' });
+    }
+
     res.json({ message: 'Post deleted successfully' });
   } catch (err) {
     res.status(500).json({ error: err.message });

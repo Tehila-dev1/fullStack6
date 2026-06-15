@@ -28,10 +28,10 @@ export const addPost = async (post) => {
   }
 };
 
-//מחיקת פוסט לפי מזהה
-export const deletePost = async (id) => {
+//מחיקת פוסט לפי מזהה (מאובטח - מעביר גם את ה-userId של המבקש)
+export const deletePost = async (id, userId) => {
   try {
-    const response = await fetch(`${BASE_URL}/${id}`, { method: 'DELETE' });
+    const response = await fetch(`${BASE_URL}/${id}?userId=${userId}`, { method: 'DELETE' });
     if (!response.ok) throw new Error('Error deleting post');
     return true;
   } catch (error) {
@@ -40,7 +40,7 @@ export const deletePost = async (id) => {
   }
 };
 
-//עדכון פוסט לפי מזהה
+//עדכון פוסט לפי מזהה (מאובטח - ה-userId כבר קיים בתוך אובייקט ה-updatedPost)
 export const updatePost = async (id, updatedPost) => {
   try {
     const response = await fetch(`${BASE_URL}/${id}`, {
