@@ -29,9 +29,9 @@ export const usePostsManager = (user) => {
 
   const isMyPost = (post) => String(post.userId) === String(user.id); //בדיקה אם הפוסט שייך למשתמש הנוכחי
 
-  //פונקציה עזר שמוודאת שה-id הוא מספר לפני השימוש בו, כדי למנוע שגיאות עם id שאינו מספרי
+  //פונקציה עזר - IDs הם כעת UUIDs (strings), אין צורך בהמרה
   const getSafeId = (id) => {
-    return isNaN(id) ? id : Number(id);
+    return id;
   };
 
   //הוספת פוסט חדש

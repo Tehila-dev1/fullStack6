@@ -1,4 +1,5 @@
 import express from 'express';
+import { randomUUID } from 'crypto';
 import pool from '../db.js';
 
 const router = express.Router();
@@ -33,13 +34,14 @@ router.get('/:id', async (req, res) => {
 router.post('/', async (req, res) => {
   try {
     const { name, username, email, phone, website, password } = req.body;
-    const [result] = await pool.query(
-      'INSERT INTO users (name, username, email, phone, website) VALUES (?, ?, ?, ?, ?)',
-      [name, username, email, phone, website]
+    const userId = randomUUID();
+    const passwordId = randomUUID();
+    await pool.query(
+      'INSERT INTO users (id, name, username, email, phone, website) VALUES (?, ?, ?, ?, ?, ?)',
+      [userId, name, username, email, phone, website]
     );
-    const userId = result.insertId;
     // שמירת הסיסמה בטבלת passwords
-    await pool.query('INSERT INTO passwords (user_id, password) VALUES (?, ?)', [userId, password]);
+    await pool.query('INSERT INTO passwords (id, user_id, password) VALUES (?, ?, ?)', [passwordId, userId, password]);
     const [newUser] = await pool.query('SELECT * FROM users WHERE id = ?', [userId]);
     res.status(201).json(newUser[0]);
   } catch (err) {

@@ -3,26 +3,30 @@ import pool from '../db.js';
 
 const router = express.Router();
 
+// POST /auth/login - התחברות
 router.post('/login', async (req, res) => {
   try {
     const { username, password } = req.body;
     
+    // שליפת נתוני המשתמש (ללא סיסמה, כי היא בטבלה נפרדת)
     const [users] = await pool.query('SELECT * FROM users WHERE username = ?', [username]);
-    if (users.length === 0) return res.status(401).json({ error: 'User not found' });
+    if (users.length === 0) return res.status(401).json({ error: 'Invalid username or password' });
 
-    const user = users[0];
+    // יצירת עותק של המשתמש כדי לא לשנות את המידע המקורי מהמסד
+    const user = { ...users[0] }; 
+    
+    // שליפת הסיסמה מהטבלה הנפרדת לבדיקה בלבד
     const [passwords] = await pool.query('SELECT * FROM passwords WHERE user_id = ?', [user.id]);
     
-    // כאן הדיבוג: מה באמת קורה?
-    console.log("--- DEBUG LOGIN ---");
-    console.log("Input Password:", password);
-    console.log("DB Password:", passwords[0]?.password);
-    console.log("Match:", passwords[0]?.password === password);
-    
     if (passwords.length === 0 || passwords[0].password !== password) {
-      return res.status(401).json({ error: 'Invalid password' });
+      return res.status(401).json({ error: 'Invalid username or password' });
     }
 
+    // סעיף א' - הסתרת הסיסמה:
+    // מוודאים שאפילו אם מישהו יוסיף בטעות סיסמה לאובייקט בעתיד, היא תימחק לפני השליחה ללקוח
+    delete user.password; 
+
+    // שליחת האובייקט הנקי והבטוח לדפדפן
     res.json(user);
   } catch (err) {
     res.status(500).json({ error: err.message });

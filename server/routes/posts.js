@@ -1,4 +1,5 @@
 import express from 'express';
+import { randomUUID } from 'crypto';
 import pool from '../db.js';
 
 const router = express.Router();
@@ -33,11 +34,12 @@ router.get('/:id', async (req, res) => {
 router.post('/', async (req, res) => {
   try {
     const { userId, title, body } = req.body;
-    const [result] = await pool.query(
-      'INSERT INTO posts (user_id, title, body) VALUES (?, ?, ?)',
-      [userId, title, body]
+    const postId = randomUUID();
+    await pool.query(
+      'INSERT INTO posts (id, user_id, title, body) VALUES (?, ?, ?, ?)',
+      [postId, userId, title, body]
     );
-    const [newPost] = await pool.query('SELECT * FROM posts WHERE id = ?', [result.insertId]);
+    const [newPost] = await pool.query('SELECT * FROM posts WHERE id = ?', [postId]);
     res.status(201).json(newPost[0]);
   } catch (err) {
     res.status(500).json({ error: err.message });
