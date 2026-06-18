@@ -4,6 +4,8 @@ import usersRouter from './routes/users.js';
 import authRouter from './routes/auth.js';
 import todosRouter from './routes/todos.js';
 import postsRouter from './routes/posts.js';
+import albumsRouter from './routes/albums.js';
+import photosRouter from './routes/photos.js';
 import commentsRouter from './routes/comments.js';
 
 const app = express();
@@ -19,6 +21,8 @@ app.use('/auth', authRouter);
 app.use('/todos', todosRouter);
 app.use('/posts', postsRouter);
 app.use('/comments', commentsRouter);
+app.use('/albums', albumsRouter);
+app.use('/photos', photosRouter);
 
 // בדיקה שהשרת עובד
 app.get('/', (req, res) => {

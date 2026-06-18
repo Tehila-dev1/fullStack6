@@ -64,6 +64,7 @@ function RegisterDetails() {
 
     try {
       const createdUser = await registerUser(newUser);
+      console.log("Created User:", createdUser);
       localStorage.removeItem('tempUser');
       
       login(createdUser);

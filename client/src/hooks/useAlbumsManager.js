@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import * as albumService from '../services/albumService';
 import * as photosService from '../services/photosService';
@@ -29,10 +30,17 @@ export const useAlbumsManager = (user) => {
     }
   }, [selectedAlbum]);
 
-  //בדיקה אם האלבום שייך למשתמש הנוכחי
-  const isMyAlbum = (album) => String(album?.userId) === String(user.id);
-  //פונקציה עזר שמוודאת שה-id הוא מספר לפני השימוש בו, כדי למנוע שגיאות עם id שאינו מספרי
-  const getSafeId = (id) => (isNaN(id) ? id : Number(id));
+  //בדיקה אם האלבום שייך למשתמש הנוכחי (תומך גם ב-userId וגם ב-user_id מה-DB)
+  const isMyAlbum = (album) => {
+    const albumUserId = album?.userId || album?.user_id;
+    return String(albumUserId) === String(user?.id);
+  };
+
+  // פונקציית עזר בטוחה להמרת מזהים - מטפלת במספרים ובמחרוזות UUID בצורה חלקה
+  const getSafeId = (id) => {
+    if (id === undefined || id === null) return id;
+    return isNaN(id) ? id : Number(id);
+  };
   
   //בחירת אלבום לצפייה בתמונות שלו
   const handleSelectAlbum = async (album) => {
@@ -74,13 +82,32 @@ export const useAlbumsManager = (user) => {
     if (saved) setAlbums([saved, ...albums]);
   };
 
-  //הוספת תמונה חדשה לאלבום הנבחר
+  // הוספת תמונה חדשה לאלבום הנבחר - מתוקן!
   const addPhoto = async () => {
+    if (!selectedAlbum) return;
+
     const title = prompt("Photo Title:");
+    // שינוי ברירת המחדל לקישור רנדומלי נקי ללא כוכביות כדי שלא ייכשל בשרת
     const url = prompt("Photo URL:", "https://picsum.photos/id/**/600/600");
+    
     if (!title || !url) return;
-    const saved = await photosService.addPhoto({ albumId: getSafeId(selectedAlbum.id), title, url, thumbnailUrl: url });
-    if (saved) setPhotos(prev => [saved, ...prev]);
+
+    // חילוץ מזהה האלבום בצורה בטוחה ומספרית
+    const cleanAlbumId = getSafeId(selectedAlbum.id);
+
+    const saved = await photosService.addPhoto({ 
+      albumId: cleanAlbumId, 
+      title, 
+      url, 
+      thumbnailUrl: url 
+    });
+    
+    if (saved) {
+      // הוספת התמונה החדשה ישירות לראש הרשימה המוצגת
+      setPhotos(prev => [saved, ...prev]);
+    } else {
+      alert("נכשלה הוספת התמונה. בדקי את ה-Console בדפדפן או את הטרמינל של השרת לשגיאות.");
+    }
   };
 
   //מחיקת תמונה
