@@ -11,14 +11,13 @@ function RegisterDetails() {
     name: '',
     email: '',
     phone: '',
-    city: '',
-    street: ''
+    // הורדנו את city ו-street כי אנחנו לא שומרים אותם במסד הנתונים כרגע
   });
 
   const navigate = useNavigate();
   const { login } = useAuth();
 
-  //בודק אם יש משתמש זמני שנשמר בלוקל סטורג' מהשלב הקודם של ההרשמה, אם לא - מנטב חזרה לדף הרישום
+  //בודק אם יש משתמש זמני שנשמר בלוקל סטורג' מהשלב הקודם של ההרשמה
   useEffect(() => {
     const temp = localStorage.getItem('tempUser');
     if (!temp) {
@@ -26,7 +25,7 @@ function RegisterDetails() {
     }
   }, [navigate]);
 
-  //פונקציה שמעדכנת את הסטייט של הטופס בכל שינוי בשדות הקלט
+  //פונקציה שמעדכנת את הסטייט של הטופס
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -35,36 +34,27 @@ function RegisterDetails() {
     }));
   };
 
-  //פונקציה שמטפלת בהרשמה
+  //פונקציה שמטפלת בהרשמה ושולחת לשרת
   const handleFinish = async (e) => {
     e.preventDefault();
     
-    //יוצר אובייקט בלוקל סטורג'
+    // מושכים את השם משתמש והסיסמה מהשלב הראשון
     const tempUser = JSON.parse(localStorage.getItem('tempUser'));
 
+    // בונים אובייקט מדויק ושטוח שמתאים בדיוק למה שהשרת (users.js) מצפה לקבל!
     const newUser = {
       name: formData.name,
       username: tempUser.username,
+      password: tempUser.password, // הוספנו את הסיסמה בשם הנכון כדי שהשרת יראה אותה
       email: formData.email,
-      address: {
-        street: formData.street,
-        suite: "", 
-        city: formData.city,
-        zipcode: "",
-        geo: { lat: "", lng: "" }
-      },
       phone: formData.phone,
-      website: tempUser.password, 
-      company: {
-        name: "",
-        catchPhrase: "",
-        bs: ""
-      }
+      website: "" // שמנו ריק כדי לא לדחוף לפה את הסיסמה בטעות
     };
 
     try {
       const createdUser = await registerUser(newUser);
-      console.log("Created User:", createdUser);
+      
+      // מנקים את הסיסמה מהלוקל סטורג' מטעמי אבטחה
       localStorage.removeItem('tempUser');
       
       login(createdUser);
@@ -72,7 +62,7 @@ function RegisterDetails() {
       
     } catch (error) {
       console.error(error);
-      alert('Failed to complete registration. Please try again.');
+      alert('Failed to complete registration. Please check the network console.');
     }
   };
 
@@ -104,22 +94,6 @@ function RegisterDetails() {
             type="text" 
             placeholder="Phone Number" 
             value={formData.phone}
-            onChange={handleChange} 
-            required 
-          />
-          <input 
-            name="city"
-            type="text" 
-            placeholder="City" 
-            value={formData.city}
-            onChange={handleChange} 
-            required 
-          />
-          <input 
-            name="street"
-            type="text" 
-            placeholder="Street" 
-            value={formData.street}
             onChange={handleChange} 
             required 
           />

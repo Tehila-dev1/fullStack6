@@ -1,12 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import * as postService from '../services/postService';
 import * as commentService from '../services/commentService';
 
 /* אחראי על כל הלוגיקה של הפוסטים והתגובות,
 כולל טעינת נתונים, הוספה, מחיקה ועריכה 
  */
-export const usePostsManager = (user) => {
-  const [posts, setPosts] = useState([]); //כל הפוסטים
+export const usePostsManager = (user, initialPosts = []) => {
+  const [posts, setPosts] = useState(() => [...initialPosts].reverse()); //כל הפוסטים
   const [searchQuery, setSearchQuery] = useState(''); //חיפוש פוסטים לפי שדה מסוים
   const [searchCriteria, setSearchCriteria] = useState('title'); //ברירת מחדל של חיפוש הוא לפי כותרת
   const [isAdding, setIsAdding] = useState(false); //מצב האם נמצא בתהליך הוספת פוסט חדש
@@ -16,18 +16,17 @@ export const usePostsManager = (user) => {
   const [comments, setComments] = useState([]); //התגובות של הפוסט הנבחר
   const [showComments, setShowComments] = useState(false); //מצב האם להציג את התגובות או לא
 
-  //טעינת כל הפוסטים בעת הרכבת הקומפוננטה
-  useEffect(() => {
-    loadPosts();
-  }, []);
+ const isMyPost = (post) => {
+  // נבדוק את כל השדות האפשריים שבהם ה-ID של המשתמש עשוי להתחבא
+  const authorId = post.userId || post.user_id || post.ownerId;
+  
+  // נדפיס רק כדי לוודא אם מצאנו משהו
+  if (!authorId) {
+    console.warn("Post is missing user ID!", post);
+  }
 
-  //פונקציה לטעינת כל הפוסטים מהשרת והצגתם בסדר הפוך (החדשים ביותר ראשונים)
-  const loadPosts = async () => {
-    const data = await postService.getAllPosts();
-    setPosts(data.reverse());
-  };
-
-  const isMyPost = (post) => String(post.userId) === String(user.id); //בדיקה אם הפוסט שייך למשתמש הנוכחי
+  return String(authorId) === String(user?.id);
+};
 
   //פונקציה עזר - IDs הם כעת UUIDs (strings), אין צורך בהמרה
   const getSafeId = (id) => {
@@ -78,6 +77,7 @@ export const usePostsManager = (user) => {
     if (!text) return;
     const commentData = {
       postId: getSafeId(selectedPost.id),
+      userId: user.id, // <--- הנה השורה שהייתה חסרה!
       name: user.name,
       email: user.email,
       body: text
@@ -85,21 +85,33 @@ export const usePostsManager = (user) => {
     const saved = await commentService.addComment(commentData);
     if (saved) setComments([...comments, saved]);
   };
-
+  
   //מחיקת תגובה
+  // usePostsManager.js (תיקון הפונקציות בסוף הקובץ)
+  // מחיקת תגובה
   const handleDeleteComment = async (id) => {
     if (window.confirm("Delete comment?")) {
-      await commentService.deleteCommentById(id);
-      setComments(comments.filter(c => c.id !== id));
+      // הוספת ה-user.id לכאן!
+      const success = await commentService.deleteCommentById(id, user.id);
+      if (success) {
+        setComments(comments.filter(c => c.id !== id));
+      }
     }
   };
 
-  //עריכת תגובה
+  // עריכת תגובה
   const handleEditComment = async (comment) => {
     const newText = prompt("Edit comment:", comment.body);
     if (newText) {
-      const updated = await commentService.updateComment(comment.id, { ...comment, body: newText });
-      setComments(comments.map(c => c.id === comment.id ? updated : c));
+      // הוספת ה-user.id לאובייקט שנשלח ל-updateComment
+      const updated = await commentService.updateComment(comment.id, { 
+        ...comment, 
+        body: newText,
+        userId: user.id 
+      });
+      if (updated) {
+        setComments(comments.map(c => c.id === comment.id ? updated : c));
+      }
     }
   };
 

@@ -1,10 +1,16 @@
+import { useLoaderData } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { usePostsManager } from '../hooks/usePostsManager';
+import * as postService from '../services/postService';
 import './PostsPage.css';
 
-//עמוד הפוסטים יש אפשרות לסנן, לצפות בפוסט להוסיף וכו'
+export const loader = async () => {
+  return postService.getAllPosts();
+};
+
 function PostsPage() {
   const { user } = useAuth();
+  const initialPosts = useLoaderData();
   
   const {
     searchQuery, setSearchQuery, searchCriteria, setSearchCriteria,
@@ -13,7 +19,7 @@ function PostsPage() {
     isMyPost, handleAddPost, handleUpdatePost, handleDeletePost,
     handleFetchComments, handleAddComment, handleDeleteComment, handleEditComment,
     filteredPosts
-  } = usePostsManager(user);
+  } = usePostsManager(user, initialPosts);
 
   return (
     <div className="posts-container">
@@ -44,19 +50,22 @@ function PostsPage() {
       )}
 
       <div className="posts-grid">
-        {filteredPosts.map(post => (
-          <div 
-            key={post.id} 
-            className={`post-card-square ${isMyPost(post) ? 'mine' : ''}`} 
-            onClick={() => { setSelectedPost(post); setShowComments(false); setComments([]); }}
-          >
-            <span className="p-id">#{post.id}</span>
-            <h3 className="p-title">{post.title}</h3>
-            {isMyPost(post) && <div className="owner-tag">My Post</div>}
-          </div>
-        ))}
+  {filteredPosts.map(post => {
+    const isMine = isMyPost(post);
+    return (
+      <div 
+        key={post.id} 
+        className={`post-card-square ${isMine ? 'mine' : ''}`}
+        onClick={() => setSelectedPost(post)}
+      >
+        <span className="p-id">#{post.id}</span>
+        <h3 className="p-title">{post.title}</h3>
+        {/* תגית שמופיעה רק אם זה באמת הפוסט שלך */}
+        {isMine && <div className="owner-tag">MY POST</div>}
       </div>
-
+    );
+  })}
+</div>
       {selectedPost && (
         <div className="modal-overlay" onClick={() => setSelectedPost(null)}>
           <div className="modal-content" onClick={e => e.stopPropagation()}>

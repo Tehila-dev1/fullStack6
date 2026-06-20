@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import * as albumService from '../services/albumService';
 import * as photosService from '../services/photosService';
@@ -6,8 +5,8 @@ import * as photosService from '../services/photosService';
 /* מנהל האלבומים ותמונות - אחראי על כל הלוגיקה של האלבומים והתמונות, 
 כולל טעינת נתונים, הוספה, מחיקה ועריכה
 */
-export const useAlbumsManager = (user) => {
-  const [albums, setAlbums] = useState([]); //כל האלבומים
+export const useAlbumsManager = (user, initialAlbums = []) => {
+  const [albums, setAlbums] = useState(() => initialAlbums); //כל האלבומים
   const [searchQuery, setSearchQuery] = useState(''); //חיפוש אלבומים לפי שדה מסוים
   const [searchCriteria, setSearchCriteria] = useState('title'); //ברירת מחדל של חיפוש הוא לפי כותרת
   const [selectedAlbum, setSelectedAlbum] = useState(null); //האלבום שנבחר לצפייה בתמונות שלו
@@ -15,11 +14,6 @@ export const useAlbumsManager = (user) => {
   const [photos, setPhotos] = useState([]); //התמונות של האלבום הנבחר
   const [page, setPage] = useState(1); //עמוד הטעינה הנוכחי של התמונות
   const [hasMore, setHasMore] = useState(true); //אם יש עוד תמונות לטעון 
-
-  //טעינת כל האלבומים בעת הרכבת הקומפוננטה
-  useEffect(() => {
-    albumService.getAllAlbums().then(setAlbums);
-  }, []);
 
   //ניקוי כאשר יצא מהאלבום מאפס את התמונות והעמוד
   useEffect(() => {
@@ -36,10 +30,9 @@ export const useAlbumsManager = (user) => {
     return String(albumUserId) === String(user?.id);
   };
 
-  // פונקציית עזר בטוחה להמרת מזהים - מטפלת במספרים ובמחרוזות UUID בצורה חלקה
+  // פונקציית עזר - עודכנה לתמיכה ב-UUID (מחזירה את המחרוזת כמו שהיא)
   const getSafeId = (id) => {
-    if (id === undefined || id === null) return id;
-    return isNaN(id) ? id : Number(id);
+    return id;
   };
   
   //בחירת אלבום לצפייה בתמונות שלו
@@ -82,17 +75,16 @@ export const useAlbumsManager = (user) => {
     if (saved) setAlbums([saved, ...albums]);
   };
 
-  // הוספת תמונה חדשה לאלבום הנבחר - מתוקן!
+  // הוספת תמונה חדשה לאלבום הנבחר
   const addPhoto = async () => {
     if (!selectedAlbum) return;
 
     const title = prompt("Photo Title:");
-    // שינוי ברירת המחדל לקישור רנדומלי נקי ללא כוכביות כדי שלא ייכשל בשרת
-    const url = prompt("Photo URL:", "https://picsum.photos/id/**/600/600");
+    // הושאר קישור נקי כברירת מחדל
+    const url = prompt("Photo URL:", "https://picsum.photos/id/10/600/600");
     
     if (!title || !url) return;
 
-    // חילוץ מזהה האלבום בצורה בטוחה ומספרית
     const cleanAlbumId = getSafeId(selectedAlbum.id);
 
     const saved = await photosService.addPhoto({ 
@@ -103,7 +95,6 @@ export const useAlbumsManager = (user) => {
     });
     
     if (saved) {
-      // הוספת התמונה החדשה ישירות לראש הרשימה המוצגת
       setPhotos(prev => [saved, ...prev]);
     } else {
       alert("נכשלה הוספת התמונה. בדקי את ה-Console בדפדפן או את הטרמינל של השרת לשגיאות.");

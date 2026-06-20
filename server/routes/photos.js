@@ -1,4 +1,5 @@
 import express from 'express';
+import { randomUUID } from 'crypto';
 import pool from '../db.js';
 
 const router = express.Router();
@@ -42,7 +43,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-// POST /photos - הוספת תמונה חדשה לאלבום
+// POST /photos - הוספת תמונה חדשה לאלבום (מעודכן ל-UUID!)
 router.post('/', async (req, res) => {
   try {
     const { albumId, title, url, thumbnailUrl } = req.body;
@@ -51,14 +52,14 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ error: 'albumId, title, and url are required' });
     }
 
-    // הוספת התמונה - ה-ID נוצר אוטומטית ע"י MySQL
-    const [result] = await pool.query(
-      'INSERT INTO photos (album_id, title, url, thumbnailUrl) VALUES (?, ?, ?, ?)',
-      [albumId, title, url, thumbnailUrl || url]
+    const photoId = randomUUID(); // מחולל מזהה מאובטח
+
+    await pool.query(
+      'INSERT INTO photos (id, album_id, title, url, thumbnailUrl) VALUES (?, ?, ?, ?, ?)',
+      [photoId, albumId, title, url, thumbnailUrl || url]
     );
 
-    // שליפת הנתונים של התמונה החדשה שנוצרה
-    const [newPhoto] = await pool.query('SELECT * FROM photos WHERE id = ?', [result.insertId]);
+    const [newPhoto] = await pool.query('SELECT * FROM photos WHERE id = ?', [photoId]);
 
     res.status(201).json({
       id: newPhoto[0].id,
@@ -72,7 +73,7 @@ router.post('/', async (req, res) => {
   }
 });
 
-// PUT /photos/:id - עדכון פרטי תמונה (כותרת) <-- החלק שהיה חסר!
+// PUT /photos/:id - עדכון פרטי תמונה
 router.put('/:id', async (req, res) => {
   try {
     const { id } = req.params;
@@ -82,7 +83,6 @@ router.put('/:id', async (req, res) => {
       return res.status(400).json({ error: 'Title is required' });
     }
 
-    // עדכון הכותרת במסד הנתונים
     const [result] = await pool.query(
       'UPDATE photos SET title = ? WHERE id = ?',
       [title, id]
@@ -92,7 +92,6 @@ router.put('/:id', async (req, res) => {
       return res.status(404).json({ error: 'Photo not found' });
     }
 
-    // שליפת הנתונים המעודכנים כדי להחזיר אובייקט תקין לריאקט
     const [updatedPhoto] = await pool.query('SELECT * FROM photos WHERE id = ?', [id]);
 
     res.json({

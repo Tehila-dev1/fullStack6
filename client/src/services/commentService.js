@@ -28,30 +28,26 @@ export const addComment = async (comment) => {
   }
 };
 
-// מחיקת תגובה לפי מזהה
-export const deleteCommentById = async (id) => {
+// commentService.js (ודאי שזה המבנה)
+export const deleteCommentById = async (id, userId) => {
   try {
-    const response = await fetch(`${BASE_URL}/${id}`, { method: 'DELETE' });
-    if (!response.ok) throw new Error('Error deleting comment');
-    return true;
-  } catch (error) {
-    console.error(error);
-    return false;
-  }
+    const response = await fetch(`${BASE_URL}/${id}`, { 
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId }) // השרת מקבל את זה עכשיו!
+    });
+    return response.ok;
+  } catch (error) { return false; }
 };
 
-// עדכון תגובה לפי מזהה
 export const updateComment = async (id, updatedComment) => {
   try {
     const response = await fetch(`${BASE_URL}/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(updatedComment)
+      body: JSON.stringify(updatedComment) // כאן ה-userId נמצא בתוך updatedComment
     });
     if (!response.ok) throw new Error('Error updating comment');
     return await response.json();
-  } catch (error) {
-    console.error(error);
-    return null;
-  }
+  } catch (error) { return null; }
 };

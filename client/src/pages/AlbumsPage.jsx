@@ -1,15 +1,22 @@
+import { useLoaderData } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useAlbumsManager } from '../hooks/useAlbumsManager';
+import * as albumService from '../services/albumService';
 import './AlbumsPage.css';
+
+export const loader = async () => {
+  return albumService.getAllAlbums();
+};
 
 //דף האלבומים - מציג את כל האלבומים, מאפשר חיפוש, יצירה וכניסה לאלבום לצפייה בתמונות שלו
 function AlbumsPage() {
   const { user } = useAuth();
+  const initialAlbums = useLoaderData();
   const {
     albums, searchQuery, setSearchQuery, searchCriteria, setSearchCriteria,
     selectedAlbum, setSelectedAlbum, photos, loadMorePhotos, hasMore, 
     handleSelectAlbum, isMyAlbum, addAlbum, addPhoto, deletePhoto, editPhoto
-  } = useAlbumsManager(user);
+  } = useAlbumsManager(user, initialAlbums);
 
   return (
     <div className="albums-page">

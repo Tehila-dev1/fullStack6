@@ -1,4 +1,5 @@
 import express from 'express';
+import { randomUUID } from 'crypto';
 import pool from '../db.js';
 
 const router = express.Router();
@@ -20,19 +21,18 @@ router.get('/', async (req, res) => {
   }
 });
 
-// POST /albums - יצירת אלבום חדש (מותאם ל-AUTO_INCREMENT)
+// POST /albums - יצירת אלבום חדש (מעודכן ל-UUID!)
 router.post('/', async (req, res) => {
   try {
     const { userId, title } = req.body;
+    const albumId = randomUUID(); // מחולל מזהה מאובטח
 
-    // נותנים ל-MySQL לייצר ID מספרי אוטומטי
-    const [result] = await pool.query(
-      'INSERT INTO albums (user_id, title) VALUES (?, ?)',
-      [userId, title]
+    await pool.query(
+      'INSERT INTO albums (id, user_id, title) VALUES (?, ?, ?)',
+      [albumId, userId, title]
     );
 
-    // שליפת האלבום שנוצר לפי ה-insertId שחזר
-    const [newAlbum] = await pool.query('SELECT * FROM albums WHERE id = ?', [result.insertId]);
+    const [newAlbum] = await pool.query('SELECT * FROM albums WHERE id = ?', [albumId]);
     
     res.status(201).json({
       ...newAlbum[0],

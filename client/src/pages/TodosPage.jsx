@@ -1,31 +1,27 @@
-import { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useState } from 'react';
+import { useParams, useLoaderData } from 'react-router-dom';
 import * as todoService from '../services/todoService';
-import './TodoPage.css'; 
+import './TodoPage.css';
 
-//עמוד המשימות של המשתמש, ניתן להוסיף משימה חדשה, לסמן כבוצע, לעדכן את הכותרת ולמחוק משימה
+// ה-loader מושך את הנתונים לפני שהעמוד נטען
+export const todosLoader = async ({ params }) => {
+  return await todoService.getTodosByUserId(params.userId);
+};
+
 function TodosPage() {
   const { userId } = useParams();
-  const [todos, setTodos] = useState([]);
+  // מקבלים את המידע שהגיע מה-loader
+  const initialTodos = useLoaderData();
+  
+  // מאתחלים את הסטייט עם המידע הטעון
+  const [todos, setTodos] = useState(initialTodos || []);
+  
   const [searchQuery, setSearchQuery] = useState('');
   const [searchCriteria, setSearchCriteria] = useState('title');
   const [sortBy, setSortBy] = useState('id');
   const [newTodoTitle, setNewTodoTitle] = useState('');
 
-  //טעינת המשימות של המשתמש בעת הרכבת הקומפוננטה או כאשר משתנה ה-userId
-  useEffect(() => {
-    loadTodos();
-  }, [userId]);
-
-  //פונקציה לטעינת המשימות של המשתמש מהשרת
-  const loadTodos = async () => {
-    try {
-      const data = await todoService.getTodosByUserId(userId);
-      setTodos(data);
-    } catch (err) { alert(err.message); }
-  };
-
-  //הוספת משימה חדשה
+  // פונקציה להוספת משימה
   const handleAdd = async (e) => {
     e.preventDefault();
     if (!newTodoTitle.trim()) return;
@@ -35,14 +31,14 @@ function TodosPage() {
     setNewTodoTitle('');
   };
 
-  //סימון משימה כבוצע או לא בוצע
+  // פונקציה לשינוי סטטוס משימה
   const handleToggle = async (todo) => {
     const updatedTodoData = { ...todo, completed: !todo.completed };
     const updated = await todoService.updateTodo(todo.id, updatedTodoData);
     if (updated) setTodos(todos.map(t => t.id === todo.id ? updated : t));
   };
 
-  //עדכון כותרת המשימה
+  // פונקציה לעדכון כותרת
   const handleUpdateTitle = async (todo) => {
     const newTitle = prompt("Update task title:", todo.title);
     if (newTitle && newTitle !== todo.title) {
@@ -52,7 +48,7 @@ function TodosPage() {
     }
   };
 
-  //מחיקת משימה
+  // פונקציה למחיקת משימה
   const handleDelete = async (id) => {
     if (window.confirm("Are you sure?")) {
       const success = await todoService.deleteTodo(id);
@@ -60,7 +56,7 @@ function TodosPage() {
     }
   };
 
-  //סינון ומיון המשימות לפי הקריטריונים שהמשתמש בחר
+  // לוגיקת סינון ומיון
   const filteredAndSortedTodos = todos
     .filter(todo => {
       if (!searchQuery) return true;
